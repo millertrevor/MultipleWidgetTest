@@ -10,6 +10,8 @@ import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
+import java.util.regex.Pattern;
+
 
 /**
  * Implementation of App Widget functionality.
@@ -19,6 +21,7 @@ public class WemoWidget extends AppWidgetProvider {
 
     private static final String ACTION_UPDATE_CLICK =
             "com.trevor.multiplewidgettest.action.UPDATE_CLICK";
+    private static final String SeperatorCharacter = "|";
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -55,9 +58,10 @@ public class WemoWidget extends AppWidgetProvider {
         // Construct the RemoteViews object
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.wemo_widget);
       //  views.setOnClickPendingIntent(R.id.widgetID,getPendingSelfIntent(context,ACTION_UPDATE_CLICK, appWidgetId));
+        String modifiedAction = ACTION_UPDATE_CLICK+SeperatorCharacter+Integer.toString(appWidgetId);
         Intent intent = new Intent(context, WemoWidget.class);
-        intent.setAction(ACTION_UPDATE_CLICK);
-        intent.putExtra("ID",appWidgetId);
+        intent.setAction(modifiedAction);
+
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context,0,intent,PendingIntent.FLAG_UPDATE_CURRENT);
         views.setOnClickPendingIntent(R.id.widgetID,pendingIntent);
         views.setTextViewText(R.id.appwidget_text, widgetText);
@@ -67,44 +71,31 @@ public class WemoWidget extends AppWidgetProvider {
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, views);
     }
- /*   private static PendingIntent getPendingSelfIntent(Context context, String action, int id) {
-        // An explicit intent directed at the current class (the "self").
-        Intent intent = new Intent(context, WemoWidget.class);
-        intent.setAction(action);
-        intent.putExtra("ID",id);
-        return PendingIntent.getBroadcast(context, 0, intent, 0);
-    }*/
+
     @Override
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
+        String string = intent.getAction();
+        String ActionMode;
+        String incomingWidgetID;
 
-        // Find the widget id from the intent.
-        //  Intent intent = getIntent();
-
-        Bundle extras = intent.getExtras();
-        int mAppWidgetId = -1;
-        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-        // intent.get
-        if (extras != null) {
-            //  mAppWidgetId = extras.getInt(
-            //           AppWidgetManager.EXTRA_APPWIDGET_ID,
-            //           AppWidgetManager.INVALID_APPWIDGET_ID);
-            //   int stop=1;
-
-            //  String widgetData = getWidgetData("Widget"+mAppWidgetId,context);
-            // CharSequence bundlestring = extras.getCharSequence("ID");
-            mAppWidgetId=extras.getInt("ID",0);
-
-            //  ComponentName thisAppWidget = new ComponentName(context.getPackageName(), example_appwidget_info.class.getName());
-            //  int[] appWidgetIds = appWidgetManager.getAppWidgetIds(thisAppWidget);
-            // stop = 2;
+        if (string.contains(SeperatorCharacter)) {
+            // Split it.
+            String[] parts = string.split("\\"+SeperatorCharacter);
+            String part1 = parts[0]; // 004
+            String part2 = parts[1]; // 034556
+            ActionMode = part1;
+            incomingWidgetID = part2;
+        } else {
+            //throw new IllegalArgumentException("String " + string + " does not contain "+SeperatorCharacter);
+            ActionMode="NONE";
+            incomingWidgetID="";
         }
-
-        if (ACTION_UPDATE_CLICK.equals(intent.getAction())) {
+        if (ACTION_UPDATE_CLICK.equals(ActionMode)) {
             //onUpdateFromReceive(context);
             //  updateAppWidget(context,appWidgetManager,mAppWidgetId);
-           //TODO: Investigate encoding Action with the ID
-            Toast.makeText(context, "From the "+mAppWidgetId+" widget (do special work)", Toast.LENGTH_SHORT).show();
+
+            Toast.makeText(context, "From the "+incomingWidgetID+" widget (do special work)", Toast.LENGTH_SHORT).show();
         }
     }
 
